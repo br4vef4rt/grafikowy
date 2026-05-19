@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: grafikowy-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-grafikowy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-grafikowy}
+    ports:
+      - "5432:5432"
+    volumes:
+      - grafikowy-pgdata:/var/lib/postgresql/data
+    networks:
+      - grafikowy-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grafikowy} -d ${POSTGRES_DB:-grafikowy}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: grafikowy-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,https://grafikowy.patrz.byst.re}
+    ports:
+      - "8000:8000"
+    networks:
+      - grafikowy-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: grafikowy-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - grafikowy-net
+
+volumes:
+  grafikowy-pgdata:
+
+networks:
+  grafikowy-net:
+    driver: bridge
