@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react'
 import client from '../api/client'
-import { formatApiError } from '../utils/ui'
+import { formatApiError, translateAbsenceType } from '../utils/ui'
 
 interface AbsenceType {
   id: number
@@ -158,9 +158,9 @@ export default function AbsenceTypesAdmin() {
               />
               <div>
                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {t.name}
+                  {translateAbsenceType(t.name)}
                   {t.is_default && (
-                    <span className="status-badge status-pending" style={{ fontSize: '0.7rem' }}>domyślny</span>
+                    <span className="status-badge status-default" style={{ fontSize: '0.7rem', background: '#e0e0e0', color: '#333' }}>domyślny</span>
                   )}
                 </div>
                 {t.description && <div className="muted" style={{ fontSize: '0.85rem' }}>{t.description}</div>}
